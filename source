@@ -1,0 +1,246 @@
+#include "io.hpp"
+#include <stdio.h>
+#include <iostream>
+#include <gpio.hpp>
+#include"utilities.h"
+#include<stdlib.h>
+
+//FUNCTION PROTOTYPES
+void GenerateRandomSequence();
+void CheckRandomNumberSequence();
+void InputArray();
+void CheckInputSeq();
+void WinCondition();
+
+//DECLARING GLOBAL VARIABLES
+int inputSeq[100];
+int curLen = 1;
+int randomNumseq[100];
+int rd;
+bool guessCorrect = true;
+bool sw1_pressed = SW.getSwitch(1);
+bool sw2_pressed = SW.getSwitch(2);
+bool sw3_pressed = SW.getSwitch(3);
+bool sw4_pressed = SW.getSwitch(4);
+
+enum condition{Lose, Win};
+//enum Range{Red =1, Green =2, Blue =3, Yellow =4};
+
+int main()
+{
+    LD.setNumber(1);
+
+    while(guessCorrect == true) {
+        GenerateRandomSequence(); //THIS GENERATES THE RANDOM SEQUENCE
+        CheckRandomNumberSequence();//CHECK THE RANDOM NUMBER SEQUENCE
+        InputArray();//PUTS INPUT INTO AN ARRAY
+        CheckInputSeq();// CHECK THE INPUT SEQUENCE
+        WinCondition();//WIN CONDITION
+
+        enum condition game;
+        game = Win;
+        printf("You %d\n", game);
+
+        LD.setNumber(curLen);
+
+    }
+}
+
+//The function GenerateRandomSequence generates a
+//random number between 1 and 4 to place into the
+//array of numbers the user must get correct.
+
+void GenerateRandomSequence()
+{
+
+    for (int i = 0; i< curLen; i++) {
+
+
+        randomNumseq[i] = rand() % 4 + 1;
+        printf("Random number %i: %i\n", i + 1, randomNumseq[i]);
+        LE.on(randomNumseq[i]);
+
+        GPIO my1Pin(P1_29);
+        GPIO my2Pin(P1_28);
+        GPIO my3Pin(P1_23);
+        GPIO my4Pin(P1_22);
+        switch (randomNumseq[i]) {
+            case 1:
+
+                my1Pin.setAsOutput();
+                my1Pin.setHigh();
+                delay_ms(500);
+                my1Pin.setLow();
+                //printf("red\n");
+
+                break;
+            case 2:
+
+                my2Pin.setAsOutput();
+                my2Pin.setHigh();
+                delay_ms(500);
+                my2Pin.setLow();
+                //printf("green\n");
+
+                break;
+            case 3:
+                my3Pin.setAsOutput();
+                my3Pin.setHigh();
+                delay_ms(500);
+                my3Pin.setLow();
+                //printf("blue\n");
+
+                break;
+            case 4:
+
+                my4Pin.setAsOutput();
+                my4Pin.setHigh();
+                delay_ms(500);
+                my4Pin.setLow();
+                //printf("yellow\n");
+
+                break;
+            default:
+                //error
+                break;
+        }
+
+        delay_ms(500);
+        LE.off(randomNumseq[i]);
+        delay_ms(500);
+    }
+
+}
+
+//CHECK RANDOM NUMBER SEQUENCE DEFINITION
+void CheckRandomNumberSequence()
+{
+    printf("This is the random number sequence: ");
+    for (int loop = 0; loop < curLen; loop++) {
+        printf(" %d", randomNumseq[loop]);
+    }
+    printf("\n");
+}
+
+//PUTS INPUT INTO AN ARRAY DEFINITION
+void InputArray()
+{
+    for (int i = 0; i < curLen; i++) {
+
+        sw1_pressed = sw2_pressed = sw3_pressed = sw4_pressed = 0;
+        while (sw1_pressed == 0 && sw2_pressed == 0 && sw3_pressed == 0 && sw4_pressed == 0) {
+
+            sw1_pressed = SW.getSwitch(1);
+            if(sw1_pressed) {
+                GPIO my1Pin(P1_29);
+                my1Pin.setAsOutput();
+                my1Pin.setHigh();
+                LE.on(1);
+                inputSeq[i] = 1;
+                printf("%i\n", inputSeq[i]);
+                delay_ms(500);
+                LE.off(1);
+                my1Pin.setLow();
+            }
+
+            sw2_pressed = SW.getSwitch(2);
+            if(sw2_pressed) {
+                GPIO my2Pin(P1_28);
+                my2Pin.setAsOutput();
+                my2Pin.setHigh();
+                LE.on(2);
+                inputSeq[i] = 2;
+                printf("%i\n", inputSeq[i]);
+                delay_ms(500);
+                LE.off(2);
+                my2Pin.setLow();
+            }
+
+            sw3_pressed = SW.getSwitch(3);
+            if(sw3_pressed) {
+                GPIO my3Pin(P1_23);
+                my3Pin.setAsOutput();
+                my3Pin.setHigh();
+                LE.on(3);
+                inputSeq[i] = 3;
+                printf("%i\n", inputSeq[i]);
+                delay_ms(500);
+                LE.off(3);
+                my3Pin.setLow();
+            }
+
+            sw4_pressed = SW.getSwitch(4);
+            if(sw4_pressed) {
+                GPIO my4Pin(P1_22);
+                my4Pin.setAsOutput();
+                my4Pin.setHigh();
+                LE.on(4);
+                inputSeq[i] = 4;
+                printf("%i\n", inputSeq[i]);
+                delay_ms(500);
+                LE.off(4);
+                my4Pin.setLow();
+            }
+        }
+    }
+}
+
+//CHECK INPUT SEQUENCE DEFINITION
+
+void CheckInputSeq()
+{
+    printf("This is the input sequence: ");
+    for (int loop = 0; loop < curLen; loop++) {
+        printf(" %d", inputSeq[loop]);
+    }
+    printf("\n");
+}
+
+//WIN CONDITION DEFINITION
+
+void WinCondition()
+{
+
+    for (int i = 0; i < curLen; i++) {
+        if (inputSeq[i] != randomNumseq[i]) {
+            guessCorrect = false;
+        }
+    }
+
+    if (guessCorrect == true) {
+        printf("You win\n");
+        LE.on(1);
+        LE.on(2);
+        LE.on(3);
+        LE.on(4);
+        delay_ms(100);
+        LE.setAll(0);
+        delay_ms(100);
+        curLen++;
+
+    }
+
+    else {
+        printf("You lost\n");
+        LD.setNumber(00);
+        LE.on(1);
+        delay_ms(100);
+        LE.off(1);
+        LE.on(2);
+        delay_ms(500);
+        LE.off(2);
+        LE.on(3);
+        delay_ms(500);
+        LE.off(3);
+        LE.on(4);
+        delay_ms(500);
+        LE.off(4);
+        LE.setAll(0);
+        delay_ms(500);
+        abort();
+
+    }
+}
+
+
+
